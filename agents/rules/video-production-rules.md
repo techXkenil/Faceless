@@ -30,6 +30,7 @@ You are the video production agent for this autonomous faceless video production
 ## 3. Voice Engine
 - Engine: **Kokoro v1.0 (ONNX)** via the Python package `kokoro-onnx`.
 - Voice: Configurable per channel (default `am_michael` at 1.1x speed, `lang="en-us"`).
+- Multi-Character Dialogue: When producing skits, allocate distinct voices (`am_michael` for the stressed protagonist, `am_adam` for the calm expert) synthesized per beat chunk with 0.20s inter-speech pauses.
 - Per-scene narration timing: add **0.18s** silence after each audio chunk, and **+0.45s** extra after the last beat of a long-video section.
 - Scene length matches audio length so visuals stay perfectly synchronized.
 
@@ -55,7 +56,8 @@ You are the video production agent for this autonomous faceless video production
 
 ## 5. Captions
 - ALL CAPS, white, black stroke outline, centered.
-- **Shorts:** Size 66, stroke 8, centered at `y=1560`, about 4 words per chunk.
+- **Shorts:** Size 46–66, stroke 3–8, centered at `y=1730` (9:16 Shorts) or `y=1560`, strictly 3–4 words per chunk. Dynamic active word in Electric Yellow `(255, 205, 50)`.
+- **Character Badges:** For multi-character skits, include a speaker pill badge (`[DAVE]` in Orange, `[ALEX]` in Cyan) on the left side of the caption bar.
 - **Long Videos:** Size 40, stroke 5, centered at `y=1010` (bottom center), one line max (width <= 1400px), at most 9 words per chunk.
 
 ---
@@ -71,6 +73,16 @@ Before delivering any video:
 
 ## 7. Outro Conversion & Safe Area Clearance
 - **Subscribe Button Transition:** The outro card displays a red `(255, 30, 50)` `"SUBSCRIBE"` pill button. An authentic cursor glides in on a Bezier curve, clicks with a pulse and ripple ring exactly as the narration says "subscribe", and the button converts into emerald green `(35, 195, 110)` `"✓ SUBSCRIBED!"`.
-- **Vertical Clearance:** Content bounds must strictly stay above `y = 915px`, reserving an 80px safe buffer above burned-in captions centered at `y = 1010`.
-- **Harmonic Anti-Freeze Micro-Motion:** Active cards utilize subtle harmonic oscillations (`smooth_float` +/-3.5px) to maintain visual vitality and eliminate static holds.
+- **Vertical Clearance:** Content bounds must strictly stay above `y = 915px` for 16:9, and above `y = 1660px` for 9:16 Shorts (ground line at $y = 1580px$, captions at $y = 1730px$).
+- **Harmonic Anti-Freeze Micro-Motion:** Every scene applies continuous camera push-in drift (1.0 -> 1.03) to ensure every pixel moves continuously and passes zero-static-hold QA gates.
 
+---
+
+## 8. 2D Character Comedy Skits & Slapstick Animation (Shorts Standard)
+- **Zero Static Slides Mandate:** When explaining a developer problem in a Short, replace abstract bullet boxes with a 2-character comedic conflict (e.g. Dave vs. Alex) via `tools/character_puppet.py`.
+- **Slapstick Physics:** Every visual fail (box drop, mallet bonk, 429 rate limit error) MUST feature:
+  1. Downward slide whistle or alarm siren anticipation.
+  2. Immediate physical impact with camera screen shake ($dx, dy = \text{amp} \cdot e^{-kt} \cdot \sin(\omega t)$).
+  3. Expanding cartoon dust cloud puffs (`render_dust_puffs`) and comic explosion starburst stickers (`BONK!`, `THUD!`).
+  4. Squished or bandaged comedic character recovery states.
+- **Foley Sound Design Mandate:** Foley carries 50% of the comedy. Every spoken beat must map to a physical sound effect (footsteps, knocking, slide whistles, heavy wooden thuds, doorbell chimes, boings) mixed with ducked background music mastered to -15.0 LUFS.

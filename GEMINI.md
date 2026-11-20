@@ -108,6 +108,7 @@ This engine supports white-label and multi-creator channel workflows:
 
 ## 10. Workspace Directory Organization
 - `tools/` — Modular production utilities:
+  - `character_puppet.py` — Procedural 2D character puppet rig, physical slapstick comedy, and skit director.
   - `orchestrator.py` — Unified end-to-end studio pipeline runner.
   - `animation_director.py` — Story-aware motion planner and AnimationPlan generator.
   - `animation_registry.py` — Declarative catalog of motion graphics techniques and schemas.

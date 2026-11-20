@@ -75,3 +75,15 @@ prompt_temp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Scratch & Local Experiment Artifacts
+scratch/
+assets_part1/
+all_direct_images.txt
+chat_share.html
+doc_template_code.txt
+reportlab_full_script.py
+script_keywords_*.txt
+test_*.*
+*.mp3
+

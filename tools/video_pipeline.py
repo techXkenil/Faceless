@@ -123,14 +123,26 @@ class StreamingVideoPipeline:
         self.encoder_info = probe_best_encoder(self.ffmpeg_exe)
         self.cmd = self._build_ffmpeg_command()
         
-        # Start FFmpeg subprocess
+        # Start FFmpeg subprocess with background stderr reader thread
         self.proc = subprocess.Popen(self.cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
         self.frame_count = 0
         self.t_start = time.time()
+        self.stderr_lines = []
+        
+        import threading
+        def _drain_stderr():
+            try:
+                for line in iter(self.proc.stderr.readline, b''):
+                    self.stderr_lines.append(line.decode("utf-8", errors="replace"))
+            except Exception:
+                pass
+        self._err_thread = threading.Thread(target=_drain_stderr, daemon=True)
+        self._err_thread.start()
 
     def _build_ffmpeg_command(self) -> List[str]:
         cmd = [
             self.ffmpeg_exe, "-y",
+            "-loglevel", "warning",
             "-f", "rawvideo",
             "-pix_fmt", "rgb24",
             "-s", f"{self.width}x{self.height}",
@@ -171,7 +183,10 @@ class StreamingVideoPipeline:
         if isinstance(frame_or_bytes, bytes):
             raw = frame_or_bytes
         elif isinstance(frame_or_bytes, Image.Image):
-            raw = frame_or_bytes.tobytes()
+            if frame_or_bytes.mode != "RGB":
+                raw = frame_or_bytes.convert("RGB").tobytes()
+            else:
+                raw = frame_or_bytes.tobytes()
         else:
             raise ValueError("Frame must be a PIL Image or bytes")
 
@@ -186,19 +201,20 @@ class StreamingVideoPipeline:
                 pct = (self.frame_count / self.total_frames) * 100.0
                 eta = (self.total_frames - self.frame_count) / max(0.1, current_fps)
                 print(f"  [Pipeline] Progress: {pct:5.1f}% ({self.frame_count}/{self.total_frames}) "
-                      f"@ {current_fps:4.1f} FPS | ETA: {eta:4.1f}s")
+                      f"@ {current_fps:4.1f} FPS | ETA: {eta:4.1f}s", flush=True)
             else:
-                print(f"  [Pipeline] Rendered: {self.frame_count} frames @ {current_fps:4.1f} FPS")
+                print(f"  [Pipeline] Rendered: {self.frame_count} frames @ {current_fps:4.1f} FPS", flush=True)
 
     def close(self):
         """Flushes stdin and waits for FFmpeg to finish encoding."""
-        stderr_output = ""
         if self.proc.stdin:
-            self.proc.stdin.close()
+            try:
+                self.proc.stdin.close()
+            except Exception:
+                pass
         
-        stdout_data, stderr_data = self.proc.communicate()
-        if stderr_data:
-            stderr_output = stderr_data.decode("utf-8", errors="replace")
+        self.proc.wait()
+        stderr_output = "".join(self.stderr_lines)
 
         if self.proc.returncode != 0:
             err_tail = "\n".join(stderr_output.strip().splitlines()[-10:])
@@ -206,8 +222,8 @@ class StreamingVideoPipeline:
 
         total_time = time.time() - self.t_start
         avg_fps = self.frame_count / max(0.001, total_time)
-        print(f"✓ Video pipeline complete! Rendered {self.frame_count} frames in {total_time:.1f}s ({avg_fps:.1f} avg FPS)")
-        print(f"  Output saved: {self.output_path}")
+        print(f"✓ Video pipeline complete! Rendered {self.frame_count} frames in {total_time:.1f}s ({avg_fps:.1f} avg FPS)", flush=True)
+        print(f"  Output saved: {self.output_path}", flush=True)
 
     def __enter__(self):
         return self
